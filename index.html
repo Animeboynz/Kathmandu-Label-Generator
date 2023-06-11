@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ZPL Label Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #222222;
+        }
+
+        .container {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            padding: 20px;
+            color: white;
+        }
+
+        .left-box, .right-box {
+            background-color: #333333;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .left-box {
+            flex-basis: 60%;
+            margin-right: 20px;
+        }
+
+        .right-box {
+            flex-basis: 40%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        h1 {
+            text-align: center;
+            margin: 0 0 20px 0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        input[type="text"], input[type="date"] {
+            width: 100%;
+            padding: 5px;
+            border-radius: 5px;
+            border: none;
+            margin-bottom: 10px;
+        }
+
+        .preview-image {
+            width: 318px;
+            height: 172px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .button {
+            background-color: #ffffff;
+            color: #222222;
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .button:hover {
+            background-color: #ff9900;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="left-box">
+        <h1>Kathmandu Clearance Label Generator</h1>
+        <form id="labelForm">
+            <label for="date">Date:</label>
+            <input type="date" id="date" required value="-/-/--">
+            <label for="name">Name:</label>
+            <input type="text" id="name" required>
+            <label for="sku">SKU:</label>
+            <input type="text" id="sku" required>
+            <label for="color">Color:</label>
+            <input type="text" id="color" required>
+            <label for="was">Was:</label>
+            <input type="text" id="was" required>
+            <label for="now">Now:</label>
+            <input type="text" id="now" required>
+        </form>
+        <div id="preview"></div>
+        <button class="button" onclick="previewLabel()">Preview</button>
+        <button class="button" onclick="downloadLabel()">Download</button>
+        <button class="button" onclick="clearInput()">Clear</button>
+    </div>
+    <div class="right-box">
+        <div class="preview-image"></div>
+
+    </div>
+</div>
+
+<script>
+
+    function clearInput()
+    {
+        //document.getElementById('date').value = '';
+        document.getElementById('name').value = '';
+        document.getElementById('sku').value = '';
+        document.getElementById('color').value = '';
+        document.getElementById('was').value = '';
+        document.getElementById('now').value = '';
+    }
+
+    function formatDate(dateString) {
+
+        const dateInput = document.getElementById('date');
+
+        if (!dateString.value) {
+            return "-/-/--";
+        } else {
+            var dateParts = dateString.value.split("-");
+            var day = dateParts[2];
+            var month = dateParts[1];
+            var year = dateParts[0];
+            return day + "/" + month + "/" + year;
+        }
+    }
+    function previewLabel() {
+        var form = document.getElementById("labelForm");
+        var dateInput = document.getElementById("date");
+        var date = formatDate(dateInput);
+        var name = document.getElementById("name").value;
+        var sku = document.getElementById("sku").value;
+        var color = document.getElementById("color").value;
+        var was = document.getElementById("was").value;
+        var now = document.getElementById("now").value;
+
+        var zplCode = `^XA~TA000~JSN~^LT0^MNW^MTT^PON^PMN^LH0,0^JMA^PR2,2~SD15^JUS^LRN^CI0^XZ
+^XA
+^MMT
+^LL0160
+^PW320
+^LS0
+^FT89,38^A0N,30,27^FH\\^FDClearance^FS
+^FT34,124^A0N,25,24^FH\\^FDWas^FS
+^FT35,155^A0N,31,31^FH\\^FDNow^FS
+
+^FT27,65^A0N,23,24^FH\\^FD${date}^FS
+
+^FT27,83^A0N,17,16^FH\\^FD${name}^FS
+^FT186,64^A0N,17,16^FH\\^FD${sku}^FS
+^FT27,100^A0N,17,16^FH\\^FD${color}^FS
+
+^FT133,124^A0N,25,24^FH\\^FD$${was}^FS
+^FT133,155^A0N,31,31^FH\\^FD$${now}^FS
+
+^PQ1,0,1,Y^XZ`;
+
+        // Replace white pixels with orange
+        var orangeRed = 229;
+        var orangeGreen = 111;
+        var orangeBlue = 0;
+
+        var imageUrl = "http://api.labelary.com/v1/printers/8dpmm/labels/1.57x0.85/0/" + encodeURIComponent(zplCode);
+
+        var image = new Image();
+        image.crossOrigin = "Anonymous";
+        image.onload = function() {
+            var canvas = document.createElement("canvas");
+            var ctx = canvas.getContext("2d");
+            canvas.width = image.width;
+            canvas.height = image.height;
+            ctx.drawImage(image, 0, 0);
+            var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            var data = imageData.data;
+            for (var i = 0; i < data.length; i += 4) {
+                var red = data[i];
+                var green = data[i + 1];
+                var blue = data[i + 2];
+                if (red > 100 && green > 100 && blue > 100) {
+                    data[i] = orangeRed;
+                    data[i + 1] = orangeGreen;
+                    data[i + 2] = orangeBlue;
+                }
+            }
+            ctx.putImageData(imageData, 0, 0);
+            var modifiedImage = new Image();
+            modifiedImage.src = canvas.toDataURL();
+            modifiedImage.alt = "Modified Image Label";
+            document.querySelector(".preview-image").innerHTML = "";
+            document.querySelector(".preview-image").appendChild(modifiedImage);
+        };
+        image.src = imageUrl;
+    }
+
+    function downloadLabel() {
+        var dateInput = document.getElementById("date");
+        var date = formatDate(dateInput.value);
+
+        var zplCode = `^XA~TA000~JSN~^LT0^MNW^MTT^PON^PMN^LH0,0^JMA^PR2,2~SD15^JUS^LRN^CI0^XZ
+^XA
+^MMT
+^LL0160
+^PW320
+^LS0
+^FT89,38^A0N,30,27^FH\\^FDClearance^FS
+^FT34,124^A0N,25,24^FH\\^FDWas^FS
+^FT35,155^A0N,31,31^FH\\^FDNow^FS
+
+^FT27,65^A0N,23,24^FH\\^FD${date}^FS
+
+^FT27,83^A0N,17,16^FH\\^FD${document.getElementById("name").value}^FS
+^FT186,64^A0N,17,16^FH\\^FD${document.getElementById("sku").value}^FS
+^FT27,100^A0N,17,16^FH\\^FD${document.getElementById("color").value}^FS
+
+^FT133,124^A0N,25,24^FH\\^FD$${document.getElementById("was").value}^FS
+^FT133,155^A0N,31,31^FH\\^FD$${document.getElementById("now").value}^FS
+
+^PQ1,0,1,Y^XZ`;
+
+        var element = document.createElement("a");
+        element.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(zplCode));
+        element.setAttribute("download", "label.txt");
+        element.style.display = "none";
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+    }
+</script>
+</body>
+</html>
