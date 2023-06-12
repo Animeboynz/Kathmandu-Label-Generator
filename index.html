@@ -18,13 +18,18 @@
             color: white;
         }
 
-        .left-box, .right-box {
+        .left-box, .middle-box, .right-box {
             background-color: #333333;
             border-radius: 10px;
             padding: 20px;
         }
 
         .left-box {
+            flex-basis: 60%;
+            margin-right: 20px;
+        }
+
+        .middle-box {
             flex-basis: 60%;
             margin-right: 20px;
         }
@@ -58,6 +63,14 @@
         .preview-image {
             width: 318px;
             height: 172px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+        .preview-fp-image {
+            width: 318px;
+            height: 300px;
             background-color: #ffffff;
             border-radius: 10px;
             margin-bottom: 10px;
@@ -97,7 +110,7 @@
             <input type="text" id="name" required>
             <label for="sku">SKU:</label>
             <input type="text" id="sku" required>
-            <label for="color">Color:</label>
+            <label for="color">Colour:</label>
             <input type="text" id="color" required>
             <label for="was">Was:</label>
             <input type="text" id="was" required>
@@ -105,19 +118,40 @@
             <input type="text" id="now" required>
         </form>
         <div id="preview"></div>
-        <button class="button" onclick="previewLabel()">Preview</button>
-        <button class="button" onclick="downloadLabel()">Download</button>
-        <button class="button" onclick="clearInput()">Clear</button>
+        <button class="button" onclick="previewClearanceLabel()">Preview</button>
+        <button class="button" onclick="downloadClearanceLabel()">Download</button>
+        <button class="button" onclick="clearClearanceInput()">Clear</button>
+    </div>
+    <div class="middle-box">
+        <h1>Kathmandu Label Generator</h1>
+        <form id="FPForm">
+            <label for="FPName">Name:</label>
+            <input type="text" id="FPName" required>
+            <label for="FPSize">Size:</label>
+            <input type="text" id="FPSize" required>
+            <label for="FPColor">Colour:</label>
+            <input type="text" id="FPColor" required>
+            <label for="FPSKU">SKU:</label>
+            <input type="text" id="FPSKU" required>
+            <label for="FPBarcode">Barcode:</label>
+            <input type="text" id="FPBarcode" required>
+            <label for="FPrice">Price:</label>
+            <input type="text" id="FPrice" required>
+        </form>
+        <div id="MidButtons"></div>
+        <button class="button" onclick="previewFPLabel()">Preview</button>
+        <button class="button" onclick="downloadClearanceLabel()">Download</button>
+        <button class="button" onclick="clearFPInput()">Clear</button>
     </div>
     <div class="right-box">
         <div class="preview-image"></div>
-
+        <div class="preview-fp-image"></div>
     </div>
 </div>
 
 <script>
 
-    function clearInput()
+    function clearClearanceInput()
     {
         //document.getElementById('date').value = '';
         document.getElementById('name').value = '';
@@ -125,6 +159,16 @@
         document.getElementById('color').value = '';
         document.getElementById('was').value = '';
         document.getElementById('now').value = '';
+    }
+
+    function clearFPInput()
+    {
+        document.getElementById('FPName').value = '';
+        document.getElementById('FPSize').value = '';
+        document.getElementById('FPColor').value = '';
+        document.getElementById('FPSKU').value = '';
+        document.getElementById('FPBarcode').value = '';
+        document.getElementById('FPrice').value = '';
     }
 
     function formatDate(dateString) {
@@ -141,7 +185,7 @@
             return day + "/" + month + "/" + year;
         }
     }
-    function previewLabel() {
+    function previewClearanceLabel() {
         var form = document.getElementById("labelForm");
         var dateInput = document.getElementById("date");
         var date = formatDate(dateInput);
@@ -209,7 +253,7 @@
         image.src = imageUrl;
     }
 
-    function downloadLabel() {
+    function downloadClearanceLabel() {
         var dateInput = document.getElementById("date");
         var date = formatDate(dateInput);
 
@@ -241,6 +285,59 @@
         document.body.appendChild(element);
         element.click();
         document.body.removeChild(element);
+    }
+
+    function previewFPLabel() {
+        //var form = document.getElementById("labelForm");
+        var dateInput = document.getElementById("date");
+        var date = document.getElementById("date");
+        var name = document.getElementById("name").value;
+        var sku = document.getElementById("sku").value;
+        var color = document.getElementById("color").value;
+        var was = document.getElementById("was").value;
+        var now = document.getElementById("now").value;
+
+        var zplCode = `^XA
+
+^CF0,40^FO20,135^FDWork in Progress^FS
+
+^XZ`;
+
+        // Replace white pixels with orange
+        var orangeRed = 229;
+        var orangeGreen = 111;
+        var orangeBlue = 0;
+
+        var imageUrl = "http://api.labelary.com/v1/printers/8dpmm/labels/1.57x1.57/0/" + encodeURIComponent(zplCode);
+
+        var image = new Image();
+        image.crossOrigin = "Anonymous";
+        image.onload = function() {
+            var canvas = document.createElement("canvas");
+            var ctx = canvas.getContext("2d");
+            canvas.width = image.width;
+            canvas.height = image.height;
+            ctx.drawImage(image, 0, 0);
+            var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            var data = imageData.data;
+            for (var i = 0; i < data.length; i += 4) {
+                var red = data[i];
+                var green = data[i + 1];
+                var blue = data[i + 2];
+                if (red > 255 && green > 255 && blue > 255) {
+                    data[i] = orangeRed;
+                    data[i + 1] = orangeGreen;
+                    data[i + 2] = orangeBlue;
+                }
+            }
+            ctx.putImageData(imageData, 0, 0);
+            var modifiedImage = new Image();
+            modifiedImage.src = canvas.toDataURL();
+            modifiedImage.alt = "Modified Image Label";
+            document.querySelector(".preview-fp-image").innerHTML = "";
+            document.querySelector(".preview-fp-image").appendChild(modifiedImage);
+        };
+        image.src = imageUrl;
     }
 </script>
 </body>
