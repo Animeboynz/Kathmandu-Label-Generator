@@ -18,6 +18,13 @@
             color: white;
         }
 
+        .title {
+            align-items: flex-start;
+            justify-content: space-between;
+            padding: 30px;
+            color: white;
+        }
+
         .left-box, .middle-box, .right-box {
             background-color: #333333;
             border-radius: 10px;
@@ -86,6 +93,7 @@
         .button {
             background-color: #ffffff;
             color: #222222;
+            margin-top: 10px;
             padding: 10px 20px;
             border-radius: 5px;
             border: none;
@@ -97,12 +105,25 @@
             background-color: #ff9900;
             color: #ffffff;
         }
+
+        .tiny-text {
+            position: fixed;
+            bottom: 5px;
+            right: 5px;
+            font-size: 15px;
+            color: #353535;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
+<div class="title">
+    <h1>Kathmandu Label Generator</h1>
+</div>
+
 <div class="container">
     <div class="left-box">
-        <h1>Kathmandu Clearance Label Generator</h1>
+        <h1>Clearance Label Generator</h1>
         <form id="labelForm">
             <label for="date">Date:</label>
             <input type="date" id="date" required value="-/-/--">
@@ -123,10 +144,12 @@
         <button class="button" onclick="clearClearanceInput()">Clear</button>
     </div>
     <div class="middle-box">
-        <h1>Kathmandu Label Generator</h1>
+        <h1>Full Price Label Generator</h1>
         <form id="FPForm">
-            <label for="FPName">Name:</label>
-            <input type="text" id="FPName" required>
+            <label for="FPL1">Product Name Line 1:</label>
+            <input type="text" id="FPL1" required>
+            <label for="FPL2">Product Name Line 2:</label>
+            <input type="text" id="FPL2" required>
             <label for="FPSize">Size:</label>
             <input type="text" id="FPSize" required>
             <label for="FPColor">Colour:</label>
@@ -140,7 +163,7 @@
         </form>
         <div id="MidButtons"></div>
         <button class="button" onclick="previewFPLabel()">Preview</button>
-        <button class="button" onclick="downloadClearanceLabel()">Download</button>
+        <button class="button" onclick="downloadFPLabel()">Download</button>
         <button class="button" onclick="clearFPInput()">Clear</button>
     </div>
     <div class="right-box">
@@ -148,7 +171,7 @@
         <div class="preview-fp-image"></div>
     </div>
 </div>
-
+<span class="tiny-text" onclick="window.location.href='https://github.com/Animeboynz/Kathmandu-Label-Generator'">Created by Roshan Varughese</span>
 <script>
 
     function clearClearanceInput()
@@ -288,20 +311,32 @@
     }
 
     function previewFPLabel() {
-        //var form = document.getElementById("labelForm");
-        var dateInput = document.getElementById("date");
-        var date = document.getElementById("date");
-        var name = document.getElementById("name").value;
-        var sku = document.getElementById("sku").value;
-        var color = document.getElementById("color").value;
-        var was = document.getElementById("was").value;
-        var now = document.getElementById("now").value;
+        var sku = document.getElementById("FPSKU").value;
+        var line1 = document.getElementById("FPL1").value;
+        var line2 = document.getElementById("FPL2").value;
+        var color = document.getElementById("FPColor").value;
+        var size = document.getElementById("FPSize").value;
+        var price = document.getElementById("FPrice").value;
+        var barcode = document.getElementById("FPBarcode").value;
 
-        var zplCode = `^XA
+        //var zplCode = `^XA^CF0,40^FO20,135^FDWork in Progress^FS^XZ`;
 
-^CF0,40^FO20,135^FDWork in Progress^FS
+        var zplCode = `
+^XA
 
-^XZ`;
+
+^FT280,236^A0B,25,24^FH\\^${sku}^FS
+^FT69,42^A0N,25,24^FH\\^FD${line1}^FS
+^FT69,66^A0N,25,24^FH\\^FD${line2}^FS
+^FT69,93^A0N,25,24^FH\\^FDSize: ${size}^FS
+^FT69,117^A0N,25,24^FH\\^FD${color}^FS
+^FT25,265^A0N,45,69^FH\\^FD${price}^FS
+
+^BY2,2,80^FT53,200^BEN,,Y,N
+^FD${barcode}^FS
+
+^FT250,283^A0N,17,19^FH\\^FDKK^FS
+^PQ1,0,1,Y^XZ`
 
         // Replace white pixels with orange
         var orangeRed = 229;
@@ -339,6 +374,46 @@
         };
         image.src = imageUrl;
     }
+
+    function downloadFPLabel() {
+        var sku = document.getElementById("FPSKU").value;
+        var line1 = document.getElementById("FPL1").value;
+        var line2 = document.getElementById("FPL2").value;
+        var color = document.getElementById("FPColor").value;
+        var size = document.getElementById("FPSize").value;
+        var price = document.getElementById("FPrice").value;
+        var barcode = document.getElementById("FPBarcode").value;
+
+        var zplCode = `^XA~TA000~JSN^LT0^MNW^MTT^PON^PMN^LH0,0^JMA^PR2,2^MD0^JUS^LRN^CI0^XZ
+^XA
+^MMT
+^LL0336
+^PW336
+^LS0
+
+^FT310,236^A0B,25,24^FH\\^FD${sku}^FS
+^FT99,72^A0N,25,24^FH\\^FD${line1}^FS
+^FT99,96^A0N,25,24^FH\\^FD${line2}^FS
+^FT99,123^A0N,25,24^FH\\^FDSize: ${size}^FS
+^FT99,147^A0N,25,24^FH\\^FD${color}^FS
+^FT55,295^A0N,45,69^FH\\^FD$${price}^FS
+
+^BY2,2,80^FT83,230^BEN,,Y,N
+^FD${barcode}^FS
+
+^FT280,313^A0N,17,19^FH\\^FDKK^FS
+^PQ1,0,1,Y^XZ`;
+
+        var element = document.createElement("a");
+        element.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(zplCode));
+        element.setAttribute("download", "label.txt");
+        element.style.display = "none";
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+    }
+
+
 </script>
 </body>
 </html>
